@@ -42,7 +42,12 @@ const getPagesLink = async (url) => {
 			"*************************Links added to links.csv file*****************************"
 		);
 	});
+	links_arr = [];
 	await browser.close();
 };
 
-getPagesLink("https://animemotivation.com/category/quotes/page/3/");
+// getPagesLink("https://animemotivation.com/category/quotes/page/3/");
+
+for (let i = 1; i < 15; i++) {
+	await getPagesLink(`https://animemotivation.com/category/quotes/page/${i}/`);
+}
