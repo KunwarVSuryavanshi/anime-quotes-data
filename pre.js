@@ -57060,6 +57060,9 @@ arr.map((item, index) => {
 	for (let key in item) {
 		str += item[key];
 		if (key === "quote") {
+			if (str.includes(`"`)) {
+				str = str.replaceAll(`"`, `'`);
+			}
 			str = `"${str}"`;
 		}
 		if (key !== "name") {
@@ -57072,20 +57075,6 @@ arr.map((item, index) => {
 
 let header = "quotes,anime,id,name\n";
 
-fs.appendFile("pre-quotes.csv", header, function (err) {
-	if (err) return console.log(chalk.red("Error Occured--->", err));
-	console.log(
-		chalk.yellow("\n*************************************\n") +
-			chalk.bold.green("\nHeader added\n") +
-			chalk.yellow("\n*************************************\n")
-	);
-});
+fs.appendFileSync("pre-quotes.csv", header);
 
-fs.appendFile("pre-quotes.csv", temp.join("\n"), function (err) {
-	if (err) return console.log(chalk.red("Error Occured--->", err));
-	console.log(
-		chalk.yellow("\n*************************************\n") +
-			chalk.bold.green("\nQuotes push to quotes.csv file\n") +
-			chalk.yellow("\n*************************************\n")
-	);
-});
+fs.appendFileSync("pre-quotes.csv", temp.join("\n"));
