@@ -57056,22 +57056,20 @@ let arr = [
 let temp = [];
 let str = "";
 
-arr.map((item) => {
+arr.map((item, index) => {
 	for (let key in item) {
 		str += item[key];
+		if (key === "quote") {
+			str = `"${str}"`;
+		}
 		if (key !== "name") {
 			str += ",";
 		}
-		// if (str.includes("\n")) {
-		// 	str.replaceAll("\n", "");
-		// }
-		// if (str.includes(",")) {
-		// 	str.replaceAll(",", "");
-		// }
 	}
-	temp.push(`"${str}"`);
+	temp.push(str);
 	str = "";
 });
+
 let header = "quotes,anime,id,name\n";
 
 fs.appendFile("pre-quotes.csv", header, function (err) {
