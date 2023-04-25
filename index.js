@@ -4,12 +4,7 @@ import chalk from "chalk";
 
 let id = 8511;
 let links_arr = [];
-let links_copy = [
-	"https://animemotivation.com/nnoitra-gilga-quotes-bleach/",
-	"https://animemotivation.com/burn-the-witch-quotes-bleach/",
-	"https://animemotivation.com/short-anime-quotes/",
-	"https://animemotivation.com/coyote-starrk-quotes-bleach/",
-];
+let links_copy = [];
 let browser;
 let page;
 let temp = [];
@@ -57,45 +52,47 @@ const getAMPagesLink = async (url) => {
 };
 
 // Maybe replacing this with the while loop would be better approach, breaking when page evaluates to null.
-// for (let i = 1; i < 15; i++) {
-// 	await getAMPagesLink(
-// 		`https://animemotivation.com/category/quotes/page/${i}/`
-// 	);
-// }
+for (let i = 1; i < 15; i++) {
+	await getAMPagesLink(
+		`https://animemotivation.com/category/quotes/page/${i}/`
+	);
+}
 
-const getAnimeChar = async (str) => {
+const getAnimeForChar = async (str) => {
 	tempStr = encodeURIComponent(str);
 	try {
-		// const malBrowser = await puppeteer.launch();
 		const malPage = await browser.newPage();
 		await malPage.goto(
 			`https://myanimelist.net/character.php?cat=character&q=` + tempStr
 		);
-		// console.log("Hello00000000000000000000000000000000000000000000");
+
 		await malPage.waitForSelector("#content");
 		let result = await malPage.$("#content table>tbody>tr>:nth-child(3) div a");
 		result = await malPage.evaluate((el) => el?.innerText, result);
-		// console.log(
-		// 	"Resssssssssssssssssssssssssssssssssssssssssssssssssssssssssss",
-		// 	result,
-		// 	`https://myanimelist.net/character.php?cat=character&q=` + tempStr
-		// );
-		if (!result) {
+
+		if (!result && str.split(" ")?.length > 1) {
 			console.log(
 				chalk.red("Error with ") +
 					tempStr +
-					". " +
-					chalk.cyanBright("Retrying with " + str.split(" ")[1])
+					". (`https://myanimelist.net/character.php?cat=character&q=" +
+					tempStr + ")" + 
+					chalk.cyanBright("\nRetrying with " + str.split(" ")[0])
 			);
 			await malPage.goto(
 				`https://myanimelist.net/character.php?cat=character&q=` +
-					str.split(" ")[1]
+					str.split(" ")[0]
 			);
 			await malPage.waitForSelector("#content");
 			result = await malPage.$("#content table>tbody>tr>:nth-child(3) div a");
 			result = await malPage.evaluate((el) => el?.innerText, result);
 			if (!result) {
-				throw new Error("Result is empty on second try also.");
+				char.set(str, result ?? " ");
+				throw new Error(
+					"Result is empty on second try also. (https://myanimelist.net/character.php?cat=character&q=" +
+						str.split(" ")[0]+")"
+				);
+			} else {
+				console.log(chalk.greenBright.underline("Success in second try with"));
 			}
 		}
 		char.set(str, result);
@@ -119,25 +116,38 @@ for (let i = 0; i < links_copy.length; i++) {
 		const blocks = await page.$$("blockquote");
 		for (let i = 0; i < blocks.length; i++) {
 			str = await page.evaluate((el) => el?.innerText, blocks[i]);
+			let tempQuote =
+				str?.split(" – ")?.length > 1 ? str.split(" – ") : str.split("–");
 			if (str?.length) {
-				if (!char.has(str?.split(" – ")[str?.split(" – ")?.length - 1])) {
-					await getAnimeChar(str?.split(" – ")[str?.split(" – ")?.length - 1]);
-					// char.set(str?.split(" – ")[1], "");
+				if (!char.has(tempQuote[tempQuote?.length - 1])) {
+					await getAnimeForChar(tempQuote[tempQuote?.length - 1]);
+					// char.set(tempQuote[1], "");
 				}
 				strObj = {
-					quote: str?.split(" – ")[0],
-					name: str?.split(" – ")[str?.split(" – ")?.length - 1],
+					quote:
+						tempQuote?.length > 2 ? tempQuote[0] + tempQuote[1] : tempQuote[0],
+					name: tempQuote[tempQuote?.length - 1],
 					id: id,
-					anime: char.get(str?.split(" – ")[str?.split(" – ")?.length - 1]),
+					anime: char.get(tempQuote[tempQuote?.length - 1]),
 				};
-
+				fs.appendFile(
+					"quotes.text",
+					JSON.stringify(strObj, null, 2) + ",\n",
+					function (err) {
+						if (err)
+							return console.log(
+								chalk.red("Error occured while writing to text file--->", err)
+							);
+						console.log(chalk.bold.green("Quotes push to quotes.text file\n"));
+					}
+				);
 				temp.push(strObj);
 				id++;
 			}
 		}
 		await page.close();
 		console.log(
-			chalk.blue("Pushed quotes to text file. ") +
+			chalk.blue("Quotes from page " + i + 1 + ". ") +
 				chalk.underline.green("New number of quotes " + temp.length)
 		);
 	} catch (err) {
@@ -149,13 +159,14 @@ for (let i = 0; i < links_copy.length; i++) {
 		console.log(chalk.greenBright("Retrying the same link."));
 	}
 	await browser.close();
+	console.log(chalk.bgCyanBright.underline("\nTask Completed !!\n"));
 }
 
-// console.log("Length---->", temp.length);
-fs.appendFile("quotes.text", JSON.stringify(temp, null, 2), function (err) {
-	if (err)
-		return console.log(
-			chalk.red("Error occured while writing to text file--->", err)
-		);
-	console.log(chalk.bold.green("Quotes push to quotes.text file\n"));
-});
+console.log("Length---->", temp.length);
+// fs.appendFile("quotes.text", JSON.stringify(temp, null, 2), function (err) {
+// 	if (err)
+// 		return console.log(
+// 			chalk.red("Error occured while writing to text file--->", err)
+// 		);
+// 	console.log(chalk.bold.green("Quotes push to quotes.text file\n"));
+// });
